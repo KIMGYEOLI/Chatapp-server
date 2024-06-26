@@ -40,15 +40,7 @@ const express = require('express');
 const app = express();
 
 const http = require('http').createServer(app);
-//const io = require('socket.io')(http, {cors:{origin:"*"}})
-const io = require('socket.io')(http, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    },
-    pingInterval: 10000, // 10 seconds
-    pingTimeout: 5000 // 5 seconds
-  });
+const io = require('socket.io')(http, {cors:{origin:"*"}})
 
 let userInfo = [];
 
