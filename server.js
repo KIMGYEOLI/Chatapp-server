@@ -40,7 +40,15 @@ const express = require('express');
 const app = express();
 
 const http = require('http').createServer(app);
-const io = require('socket.io')(http, {cors:{origin:"*"}})
+//const io = require('socket.io')(http, {cors:{origin:"*"}})
+const io = require('socket.io')(http, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    },
+    pingInterval: 10000, // 10 seconds
+    pingTimeout: 5000 // 5 seconds
+  });
 
 let userInfo = [];
 
@@ -92,7 +100,7 @@ io.on('connection', (socket) => {
         return `${year}-${month}-${day}`;
       }; 
       const currentDate = getCurrentDate();
-      socket.broadcast.emit('msg', {level:"sys", msg:user.nickName+" 님이 퇴장하였습니다.", nickName:"", date: currentDate});
+      socket.broadcast.emit('msg', {level:"sys", msg:user.nickName+" 님이 퇴장하였습니다.", nickName:""});
     }
   });
 });
