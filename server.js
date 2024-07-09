@@ -35,9 +35,10 @@ io.on('connection', (socket) => {
     const room = chatRooms.find(room => room.roomName === roomName);
     if(room && room.createdBy === requestedBy) {
       chatRooms = chatRooms.filter(room => room.roomName !== roomName);
+      io.to(roomName).emit('roomDeleted', {msg: "방이 삭제되었습니다."});
       io.emit('updateRoomList', chatRooms);
     } else {
-      socket.emit('deleteRoomFail', {msg: "Only the creator can delete this room."});
+      socket.emit('deleteRoomFail', {msg: "방을 삭제할 권한이 없습니다."});
     }
   });
 
