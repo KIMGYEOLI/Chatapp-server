@@ -34,9 +34,12 @@ io.on('connection', (socket) => {
   socket.on('deleteRoom', ({ roomName, requestedBy }) => {
     const room = chatRooms.find(room => room.roomName === roomName);
     if(room && room.createdBy === requestedBy) {
-      chatRooms = chatRooms.filter(room => room.roomName !== roomName);
       io.to(roomName).emit('roomDeleted', {msg: "방이 삭제되었습니다."});
+      chatRooms = chatRooms.filter(room => room.roomName !== roomName);
       io.emit('updateRoomList', chatRooms);
+
+      userInfo = userInfo.map(user => user.room === roomName ? { ...user, roomName: null } : user);
+      io.emit('updateUserList', userInfo);
     } else {
       socket.emit('deleteRoomFail', {msg: "방을 삭제할 권한이 없습니다."});
     }
@@ -48,9 +51,17 @@ io.on('connection', (socket) => {
     if (room) {
       room.users.push({ id: socket.id, nickName });
       socket.join(roomName);
+
+      // 사용자 정보에 채팅방 정보 추가
+      const user = userInfo.find(user => user.id === socket.id);
+      if (user) {
+        user.roomName = roomName;
+      }
+
       console.log(`User ${nickName} joined room: ${roomName}`);  // 로그 추가
       socket.emit('joinRoomSuccess', { roomName });
       io.to(roomName).emit('msg', { level: "sys", msg: `${nickName} 님이 입장하였습니다.`, nickName: "" });
+      io.emit('updateUserList', userInfo);
     } else {
       socket.emit('joinRoomFail', { msg: "Room not found." });
     }
@@ -59,10 +70,18 @@ io.on('connection', (socket) => {
   socket.on('leaveRoom', ({roomName, nickName}) => {
     console.log(`Leave room request: ${roomName} by ${nickName}`);
     const room = chatRooms.find(room => room.roomName === roomName);
+
     if(room) {
       room.users = room.users.filter(user => user.id !== socket.id);
       socket.leave(roomName);
+
+      const user = userInfo.find(user => user.id === socket.id);
+      if (user) {
+        delete user.roomName;
+      }
+
       console.log(`User ${nickName} left room: ${roomName}`);
+      io.emit('updateUserList', userInfo);
       io.to(roomName).emit('msg', {level: "sys", msg: `${nickName} 님이 퇴장하였습니다.`});
     }
   });
